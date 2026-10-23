@@ -1,0 +1,403 @@
+@font-face { font-family: "PT Mono"; font-weight: 400; font-style: normal; src: url("fonts/PTM55FT.ttf"); }
+@font-face { font-family: "PT Sans"; font-weight: 700; font-style: normal; src: url("fonts/PT_Sans-Web-Bold.ttf"); }
+@font-face { font-family: "PT Sans"; font-weight: 700; font-style: italic; src: url("fonts/PT_Sans-Web-BoldItalic.ttf"); }
+@font-face { font-family: "PT Sans"; font-weight: 400; font-style: italic; src: url("fonts/PT_Sans-Web-Italic.ttf"); }
+@font-face { font-family: "PT Sans"; font-weight: 400; font-style: normal; src: url("fonts/PT_Sans-Web-Regular.ttf"); }
+@font-face { font-family: "PT Serif"; font-weight: 700; font-style: normal; src: url("fonts/PT_Serif-Web-Bold.ttf"); }
+@font-face { font-family: "PT Serif"; font-weight: 700; font-style: italic; src: url("fonts/PT_Serif-Web-BoldItalic.ttf"); }
+@font-face { font-family: "PT Serif"; font-weight: 400; font-style: italic; src: url("fonts/PT_Serif-Web-Italic.ttf"); }
+@font-face { font-family: "PT Serif"; font-weight: 400; font-style: normal; src: url("fonts/PT_Serif-Web-Regular.ttf"); }
+
+/* Platform book: print stylesheet for WeasyPrint.
+   Body in PT Serif, headings and apparatus in PT Sans, code in PT Mono. */
+
+:root {
+  --ink: #1d2126;
+  --muted: #6b7280;
+  --rule: #d5d9df;
+  --accent: #23466e;
+  --code-bg: #f4f5f7;
+}
+
+@page {
+  size: A4;
+  margin: 20mm 19mm 19mm 21mm;
+}
+/* Mirrored margins for a two-sided book: the wider margin is the inner one. */
+@page :right {
+  margin: 20mm 18mm 19mm 25mm;
+  @top-right {
+    content: string(chapter, first-except);
+    font: 8pt "PT Sans";
+    color: #6b7280;
+    vertical-align: bottom;
+    padding-bottom: 3mm;
+  }
+  @bottom-right {
+    content: counter(page);
+    font: 9pt "PT Sans";
+    color: #6b7280;
+  }
+}
+@page :left {
+  margin: 20mm 25mm 19mm 18mm;
+  @top-left {
+    content: string(book, first-except);
+    font: 8pt "PT Sans";
+    color: #6b7280;
+    vertical-align: bottom;
+    padding-bottom: 3mm;
+  }
+  @bottom-left {
+    content: counter(page);
+    font: 9pt "PT Sans";
+    color: #6b7280;
+  }
+}
+/* Pages left empty before a part title carry nothing. */
+@page :blank {
+  @top-left { content: none; }
+  @top-right { content: none; }
+  @bottom-left { content: none; }
+  @bottom-right { content: none; }
+}
+
+/* The title page and the table of contents carry no running header. */
+@page front {
+  @top-left { content: none; }
+  @top-right { content: none; }
+}
+@page front:left { @bottom-left { content: none; } }
+@page front:right { @bottom-right { content: none; } }
+@page cover {
+  @top-left { content: none; }
+  @top-right { content: none; }
+  @bottom-left { content: none; }
+  @bottom-right { content: none; }
+}
+
+html {
+  font-family: "PT Serif", serif;
+  font-size: 10pt;
+  line-height: 1.38;
+  color: var(--ink);
+  hyphens: auto;
+  /* Russian breaks: words of at least 6 letters, at least 3 letters on each side,
+     everywhere — body text, lists and narrow table cells alike. */
+  hyphenate-limit-chars: 6 3 3;
+}
+
+body { margin: 0; }
+
+p {
+  margin: 0;
+  text-indent: 1.25em;
+  text-align: justify;
+  orphans: 3;
+  widows: 3;
+  hyphenate-limit-chars: 6 3 3;
+}
+li p, td p, th p, figcaption, blockquote p, .titlepage p, nav p { text-indent: 0; }
+ul, ol, table, figure, pre, blockquote { margin-top: 0.55em; }
+
+/* ---------- Title page ---------- */
+
+.titlepage {
+  page: cover;
+  break-after: page;
+  padding-top: 38mm;
+}
+.titlepage p { text-align: left; hyphens: manual; }
+.tp-brand {
+  string-set: brand content(text);
+  font: 700 10pt "PT Sans";
+  letter-spacing: 0.18em;
+  text-transform: uppercase;
+  color: var(--accent);
+  margin-bottom: 10mm;
+}
+.tp-title {
+  font: 700 30pt/1.15 "PT Sans";
+  color: var(--ink);
+  margin: 0 0 6mm;
+}
+.tp-subtitle {
+  font: 14pt/1.35 "PT Serif";
+  color: #374151;
+  margin: 0 0 16mm;
+  max-width: 140mm;
+}
+.tp-meta p {
+  font: 10pt/1.45 "PT Sans";
+  color: #374151;
+  margin: 0 0 2mm;
+  max-width: 150mm;
+}
+.tp-date { font-weight: 700 !important; }
+.tp-author {
+  font: 13pt/1.35 "PT Sans";
+  color: #111827;
+  margin: -10mm 0 14mm;
+}
+.tp-legend {
+  margin-top: 26mm;
+  border-top: 0.6pt solid var(--rule);
+  padding-top: 5mm;
+}
+.tp-legend p {
+  font: 9.5pt/1.5 "PT Sans";
+  color: #374151;
+  margin: 0 0 1.6mm;
+}
+.tp-legend .tp-legend-title {
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.08em;
+  font-size: 8.5pt;
+  color: var(--muted);
+  margin-bottom: 3mm;
+}
+.tp-legend .status { margin-right: 2mm; }
+
+/* ---------- Table of contents ---------- */
+
+nav#TOC {
+  page: front;
+  break-after: page;
+}
+.toc-title {
+  font: 700 20pt "PT Sans";
+  color: var(--ink);
+  margin: 0 0 7mm;
+  text-align: left;
+}
+nav#TOC ul {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+}
+nav#TOC > ul {
+  columns: 2;
+  column-gap: 9mm;
+}
+nav#TOC > ul > li { break-inside: avoid; }
+nav#TOC > ul > li {
+  font: 700 9.5pt/1.3 "PT Sans";
+  margin: 0 0 2.4mm;
+}
+nav#TOC > ul > li > ul > li {
+  font: 400 8.3pt/1.28 "PT Sans";
+  margin: 0.4mm 0 0 6mm;
+  color: #374151;
+}
+nav#TOC a {
+  color: inherit;
+  text-decoration: none;
+}
+nav#TOC a::after {
+  content: leader(". ") target-counter(attr(href), page);
+  font-weight: 400;
+  color: var(--muted);
+}
+nav#TOC .toc-section-number {
+  display: inline-block;
+  min-width: 7mm;
+}
+nav#TOC ul ul .toc-section-number { min-width: 9mm; }
+
+/* ---------- Headings ---------- */
+
+h1, h2, h3, h4 {
+  break-inside: avoid;
+  hyphens: manual;
+  font-family: "PT Sans", sans-serif;
+  color: var(--ink);
+  line-height: 1.2;
+  hyphens: manual;
+  break-after: avoid;
+}
+
+/* Chapters open on a new page with a sunk title; parts get a recto page
+   of their own with a blank back, as in a printed book. */
+main section.level1 { break-before: page; }
+main section.level1.part { break-before: right; break-after: right; }
+main section.level1 { string-set: book attr(data-book-title); }
+
+main h1 {
+  string-set: chapter content(text);
+  font-size: 22pt;
+  line-height: 1.15;
+  margin: 24mm 0 9mm;
+  padding-bottom: 3mm;
+  border-bottom: 1.2pt solid var(--accent);
+  hyphens: manual;
+  break-after: avoid;
+}
+main > section:first-child > h1 { margin-top: 24mm; }
+main h1 .header-section-number {
+  color: var(--accent);
+  margin-right: 3mm;
+}
+h2 {
+  font-size: 13.5pt;
+  margin: 6.5mm 0 2.5mm;
+}
+h2 .header-section-number,
+h3 .header-section-number {
+  color: var(--accent);
+  margin-right: 2mm;
+}
+h3 {
+  font-size: 11pt;
+  margin: 4.5mm 0 1.8mm;
+}
+
+/* ---------- Lists ---------- */
+
+ul, ol {
+  margin: 0 0 0.6em;
+  padding-left: 5.5mm;
+}
+li { margin: 0 0 0.22em; }
+li > p { margin-bottom: 0.25em; }
+li > ul, li > ol { margin-top: 0.2em; margin-bottom: 0.2em; }
+
+strong { font-weight: 700; }
+
+/* ---------- Status badges ---------- */
+
+.status {
+  font: 700 7.4pt/1 "PT Sans";
+  letter-spacing: 0.02em;
+  padding: 0.35mm 1.5mm 0.45mm;
+  border-radius: 1.6mm;
+  white-space: nowrap;
+  hyphens: none;
+  vertical-align: 0.4pt;
+}
+.status.now  { background: #dcefdd; color: #1f5a2b; }
+.status.dec  { background: #dfe8f5; color: #1e3f6b; }
+.status.prop { background: #fbead0; color: #7a4a04; }
+.status.spec { background: #ebe3f5; color: #4b2a75; }
+.status.open { background: #f5dddd; color: #7c1f1f; }
+
+/* ---------- Code ---------- */
+
+code {
+  font-family: "PT Mono", monospace;
+  font-size: 0.86em;
+  hyphens: none;
+  overflow-wrap: anywhere;
+}
+p code, li code, td code {
+  background: var(--code-bg);
+  padding: 0 0.6mm;
+  border-radius: 0.6mm;
+}
+pre {
+  font: 8.2pt/1.38 "PT Mono", monospace;
+  background: var(--code-bg);
+  border-left: 1.4pt solid var(--rule);
+  padding: 2.2mm 3mm;
+  margin: 0 0 0.8em;
+  white-space: pre-wrap;
+  overflow-wrap: anywhere;
+  break-inside: avoid;
+}
+pre code { font-size: 1em; background: none; padding: 0; }
+
+/* ---------- Tables ---------- */
+
+table {
+  width: 100%;
+  border-collapse: collapse;
+  margin: 1mm 0 1em;
+  font: 8.8pt/1.34 "PT Sans";
+}
+thead { display: table-header-group; }
+tr { break-inside: avoid; }
+th {
+  text-align: left;
+  font-weight: 700;
+  background: #eef1f5;
+  border-bottom: 0.8pt solid #b8c0cc;
+  padding: 1.4mm 2mm;
+  vertical-align: bottom;
+}
+td {
+  border-bottom: 0.4pt solid var(--rule);
+  padding: 1.2mm 2mm;
+  vertical-align: top;
+  hyphens: auto;
+}
+td p, th p { text-align: left; margin: 0; }
+
+/* ---------- Figures ---------- */
+
+figure {
+  margin: 2mm 0 5mm;
+  text-align: center;
+  break-inside: avoid;
+}
+figure img {
+  max-width: 100%;
+  max-height: 98mm;
+}
+figure img.tall { max-height: 168mm; }
+@page landscape { size: A4 landscape; }
+figure.landscape { page: landscape; margin: 0; break-before: page; break-after: page; }
+figure.landscape img { max-width: 100%; max-height: 160mm; }
+figcaption {
+  font: 8.8pt/1.35 "PT Sans";
+  color: var(--muted);
+  margin-top: 2mm;
+  text-align: center;
+}
+
+/* ---------- Misc ---------- */
+
+blockquote {
+  margin: 0 0 0.8em;
+  padding: 1.5mm 4mm;
+  border-left: 2pt solid var(--accent);
+  background: #f5f7fa;
+}
+blockquote p { margin-bottom: 0.3em; }
+
+a { color: var(--accent); text-decoration: none; }
+
+hr {
+  border: none;
+  border-top: 0.6pt solid var(--rule);
+  margin: 4mm 0;
+}
+
+/* ---------- Parts ---------- */
+
+main h1.part {
+  string-set: none;
+  border-bottom: none;
+  text-align: center;
+  font-size: 26pt;
+  margin: 75mm 0 0;
+  color: var(--accent);
+}
+nav#TOC a[href^="#part-"] {
+  color: var(--accent);
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+}
+
+
+/* ---------- Figure numbering: Рис. <chapter>.<n> ---------- */
+
+main { counter-reset: chap -1; }
+main section.level1:not(.unnumbered) { counter-increment: chap; counter-reset: fig; }
+main figure { counter-increment: fig; }
+main figcaption::before {
+  content: "Fig. " counter(chap) "." counter(fig) ". ";
+  font-weight: 700;
+  color: var(--ink);
+}
+
+html:lang(ru) main figcaption::before { content: "Рис. " counter(chap) "." counter(fig) ". "; }

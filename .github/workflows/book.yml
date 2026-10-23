@@ -1,0 +1,35 @@
+name: book
+on: [push, pull_request]
+permissions:
+  contents: read
+jobs:
+  smoke:
+    runs-on: ubuntu-24.04
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12.15"
+      - name: Native renderer dependencies
+        run: sudo apt-get update && sudo apt-get install -y libpango-1.0-0 libpangoft2-1.0-0
+      - name: Pinned tools
+        run: |
+          python -m pip install -r requirements-lock.txt
+          curl --fail --location --output "$RUNNER_TEMP/pandoc.tar.gz" https://github.com/jgm/pandoc/releases/download/3.11/pandoc-3.11-linux-amd64.tar.gz
+          echo "37edb3bbcf722f921a009941bf5874e2e0c09263226c9b4a2d980788cb062ab6  $RUNNER_TEMP/pandoc.tar.gz" | sha256sum --check
+          tar -xzf "$RUNNER_TEMP/pandoc.tar.gz" -C "$RUNNER_TEMP"
+          echo "$RUNNER_TEMP/pandoc-3.11/bin" >> "$GITHUB_PATH"
+      - name: Readiness and contract tests
+        run: |
+          scripts/platform-book ready
+          python -m unittest discover -s tests -v
+      - name: Two-page sample with embedded fonts and declared figures
+        run: |
+          scripts/platform-book figures examples/two-page
+          scripts/platform-book build examples/two-page .temp/two-page.pdf --expected-pages 2
+          scripts/platform-book check-pdf .temp/two-page.pdf --expected-pages 2 --fonts "PT Serif" "PT Sans" "PT Mono"
+      - uses: actions/upload-artifact@v4
+        with:
+          name: two-page-book
+          path: .temp/two-page.pdf
+          if-no-files-found: error

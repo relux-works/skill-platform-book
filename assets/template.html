@@ -1,0 +1,36 @@
+<!DOCTYPE html>
+<html lang="$lang$">
+<head>
+<meta charset="utf-8">
+<title>$pagetitle$</title>
+</head>
+<body>
+<section class="titlepage">
+  <p class="tp-brand">$brand$</p>
+  <p class="tp-title">$title$</p>
+$if(subtitle)$
+  <p class="tp-subtitle">$subtitle$</p>
+$endif$
+$if(author)$
+  <p class="tp-author">$for(author)$$author$$sep$, $endfor$</p>
+$endif$
+  <div class="tp-meta">
+$if(date)$
+    <p class="tp-date">$date$</p>
+$endif$
+$for(notes)$
+    <p class="tp-note">$notes$</p>
+$endfor$
+  </div>
+</section>
+$if(toc)$
+<nav id="TOC" role="doc-toc">
+<p class="toc-title">$toc-title$</p>
+$table-of-contents$
+</nav>
+$endif$
+<main>
+$body$
+</main>
+</body>
+</html>

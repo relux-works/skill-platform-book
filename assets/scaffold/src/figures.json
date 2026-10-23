@@ -1,0 +1,8 @@
+{
+  "reading-flow": {
+    "source": "src/reading-flow.svg",
+    "render": "diagrams/reading-flow.svg",
+    "source_sha256": "50118f3a45f162593e87576289e43f7a7de1da77a49f8228fc8860492a9bc9dc",
+    "render_sha256": "50118f3a45f162593e87576289e43f7a7de1da77a49f8228fc8860492a9bc9dc"
+  }
+}

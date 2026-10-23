@@ -1,0 +1,21 @@
+{
+  "python": "3.12.15",
+  "pandoc": "3.11",
+  "weasyprint": "70.0",
+  "pypdf": "5.9.0",
+  "fonts_source": {
+    "repository": "https://github.com/google/fonts",
+    "commit": "e7db6ca603fd4862010383ff17ffd6cc4ffac1c0"
+  },
+  "fonts": {
+    "PTM55FT.ttf": "cbe732b3b8fd211fd986ebdfc9b870ddeca4faab0bb5425fc509b37f9b4ac804",
+    "PT_Sans-Web-Bold.ttf": "3128bd5ecf01816e59a23d54c57a7a6b14615b07db53ff277c77376010265b05",
+    "PT_Sans-Web-BoldItalic.ttf": "81ac221cdd02bccfa679c74adb122478e9d092e65a722e31ca11469961483785",
+    "PT_Sans-Web-Italic.ttf": "5a90fe2d0cd798700935240580bdcc12c0ffc9102c0c7163b3418e13bc21debd",
+    "PT_Sans-Web-Regular.ttf": "9cc831490532009bae2b3ce0d39c62adfc889060beb421593bfd9d2396d0f10a",
+    "PT_Serif-Web-Bold.ttf": "038ba7336bd7ea14f12ad155bed51a4345cac5153275d521dec3ba04021c526e",
+    "PT_Serif-Web-BoldItalic.ttf": "f003788ba08981eb0988b3557a6f224a53dab49c20e283e8b74d5af3c466f8be",
+    "PT_Serif-Web-Italic.ttf": "f57e95ff9dc85691a3b2e193f2028db36f6663939a46c0fc4f286d618b80b7ce",
+    "PT_Serif-Web-Regular.ttf": "a4951fade06ff8f09b7673aa81ffb65a8cd409e24d3289a6dc670bc4dda2557a"
+  }
+}

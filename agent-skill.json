@@ -1,0 +1,21 @@
+{
+  "schema_version": 3,
+  "runtime_roots": ["scripts", "assets"],
+  "commands": {
+    "platform-book": {"type": "script", "unix_path": "scripts/platform-book"}
+  },
+  "capabilities": {
+    "network": "none",
+    "filesystem": "repo",
+    "exec": ["python3", "pandoc", "weasyprint"],
+    "secrets": "none",
+    "env_read": []
+  },
+  "dependencies": {
+    "commands": {
+      "python3": {"type": "system", "command": "python3", "hint": "Provision Python 3.12.15 and requirements-lock.txt in an isolated environment."},
+      "pandoc": {"type": "system", "command": "pandoc", "hint": "Provision pandoc 3.11."},
+      "weasyprint": {"type": "system", "command": "weasyprint", "hint": "Provision WeasyPrint 70.0 with its native Pango dependencies."}
+    }
+  }
+}
