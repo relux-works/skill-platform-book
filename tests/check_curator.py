@@ -6,12 +6,18 @@ import os
 from pathlib import Path
 import shutil
 import subprocess
+import sys
 import tempfile
 
 ROOT = Path(__file__).resolve().parents[1]
 
 
 def check(curator):
+    # Claim: exercise the documented activated ordinary venv, not a test-only
+    # Python launcher that could mask Curator canonicalizing its symlink.
+    virtual_env = os.environ.get("VIRTUAL_ENV")
+    if not virtual_env or Path(sys.prefix).resolve() != Path(virtual_env).resolve() or sys.prefix == sys.base_prefix:
+        raise AssertionError("activate the provisioned ordinary venv before the installed-shim test")
     scratch = ROOT / ".temp"
     scratch.mkdir(exist_ok=True)
     with tempfile.TemporaryDirectory(prefix="curator-check-", dir=scratch) as directory:
@@ -60,6 +66,13 @@ def check(curator):
             if result.returncode or "ready" not in result.stdout:
                 raise AssertionError(f"installed readiness failed: {result.stdout}{result.stderr}")
         ready()
+        # Claim: invalid activation cannot silently fall back to base Python.
+        valid_venv = env["VIRTUAL_ENV"]
+        env["VIRTUAL_ENV"] = str(root / "missing-venv")
+        refused = subprocess.run([str(shim), "ready"], cwd=project, env=env, text=True, capture_output=True)
+        if refused.returncode != 2 or "activated VIRTUAL_ENV has no Python interpreter" not in refused.stderr:
+            raise AssertionError(f"invalid activation did not refuse: {refused.stdout}{refused.stderr}")
+        env["VIRTUAL_ENV"] = valid_venv
         # Claim: a changed source font cannot silently alter the locked runtime.
         font = source / "assets/fonts/PTM55FT.ttf"
         font.write_bytes(b"changed source bytes")

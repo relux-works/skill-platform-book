@@ -23,6 +23,7 @@ In a source checkout only, the entry point is described in README. Read
 For a new book run:
 
 ```sh
+# Activate the provisioned ordinary Python venv first (README setup).
 platform-book ready
 platform-book new docs/book --language en
 ```
@@ -84,8 +85,9 @@ Hashes detect drift; they do not prove the render corresponds to the source.
 Use Python’s `hashlib.sha256(path.read_bytes()).hexdigest()` to compute them.
 
 Images must be local Markdown figures (`png`, `svg`, `jpg`, `jpeg`). Reference
-syntax and Pandoc attributes work. Raw HTML, symlinks, unlisted files, stale
-hashes and external SVG resources fail validation. SVGs must be self-contained.
+syntax, IDs/classes and numeric width/height attributes work. Arbitrary HTML
+attributes, including style and srcset, are refused. Raw HTML, symlinks,
+unlisted files, stale hashes and external SVG resources fail validation. SVGs must be self-contained.
 The checker does not render diagram source languages; generate renders first.
 
 ## 4. Build
@@ -96,7 +98,8 @@ platform-book build docs/book .temp/book.pdf
 platform-book check-pdf .temp/book.pdf --fonts "PT Serif" "PT Sans" "PT Mono"
 ```
 
-The build validates figures, renders with Pandoc and WeasyPrint, then checks page
+The build validates figures, serves only declared assets through WeasyPrint’s
+fetch allow-list, renders with Pandoc and WeasyPrint, then checks page
 count and font embedding before atomically publishing the PDF. A failed build
 preserves an existing output. Add `--expected-pages N` only for a fixed layout
 contract. PT Mono is expected only when the book contains code. `ready` checks

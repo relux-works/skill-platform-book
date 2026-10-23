@@ -13,7 +13,7 @@ import unittest
 from unittest.mock import patch
 
 ROOT = Path(__file__).resolve().parents[1]
-loader = importlib.machinery.SourceFileLoader("book", str(ROOT / "scripts/platform-book"))
+loader = importlib.machinery.SourceFileLoader("book", str(ROOT / "scripts/platform_book.py"))
 spec = importlib.util.spec_from_loader(loader.name, loader)
 book = importlib.util.module_from_spec(spec)
 loader.exec_module(book)
@@ -57,6 +57,9 @@ class BookTests(unittest.TestCase):
     # tools, tool/parser version drift and a modified font before rendering.
     def test_readiness_gates(self):
         book.readiness()
+        with patch.object(book.sys, "prefix", "/invented/other-python"):
+            with self.assertRaisesRegex(book.Refusal, "outside the activated VIRTUAL_ENV"):
+                book.readiness()
         with patch.object(book.sys, "version", "0.0.0"):
             with self.assertRaisesRegex(book.Refusal, "Python version differs"):
                 book.readiness()
@@ -71,6 +74,11 @@ class BookTests(unittest.TestCase):
                 book.readiness()
         with patch.object(book.importlib.metadata, "version", side_effect=book.importlib.metadata.PackageNotFoundError):
             with self.assertRaisesRegex(book.Refusal, "missing pinned Python dependency"):
+                book.readiness()
+        real_version = book.importlib.metadata.version
+        with patch.object(book.importlib.metadata, "version",
+                          side_effect=lambda name: "0.0" if name == "weasyprint" else real_version(name)):
+            with self.assertRaisesRegex(book.Refusal, "weasyprint version differs"):
                 book.readiness()
         assets = self.root / "assets"
         shutil.copytree(book.ASSETS, assets)
@@ -207,13 +215,10 @@ class BookTests(unittest.TestCase):
     # leaves no temporary partial PDF; a subsequent valid build replaces it.
     def test_atomic_publication(self):
         output = self.root / "published.pdf"; output.write_bytes(b"previous output")
-        original_run = book.run
-        def failed_renderer(argv):
-            if argv[0] == "weasyprint" and "--version" not in argv:
-                Path(argv[-1]).write_bytes(b"partial")
-                raise book.Refusal("renderer failed control")
-            return original_run(argv)
-        with patch.object(book, "run", side_effect=failed_renderer):
+        def failed_renderer(book_dir, language, html, pdf):
+            pdf.write_bytes(b"partial")
+            raise book.Refusal("renderer failed control")
+        with patch.object(book, "render_pdf", side_effect=failed_renderer):
             with self.assertRaisesRegex(book.Refusal, "renderer failed control"):
                 book.build(self.book, output, 2)
         self.assertEqual(output.read_bytes(), b"previous output")
@@ -235,9 +240,11 @@ class BookTests(unittest.TestCase):
             ("contents", "toc must be boolean", "test_settings_gates"),
             ("chapters", "no numbered chapters", "test_settings_gates"),
             ("python", "Python version differs", "test_readiness_gates"),
+            ("venv-prefix", "Python is outside the activated VIRTUAL_ENV", "test_readiness_gates"),
             ("tool-presence", "missing tool: pandoc", "test_readiness_gates"),
             ("version", "pandoc version differs", "test_readiness_gates"),
             ("parser-version", "pypdf version differs", "test_readiness_gates"),
+            ("renderer-version", "weasyprint version differs", "test_readiness_gates"),
             ("font", "modified bundled font", "test_readiness_gates"),
             ("hash", "figure source hash mismatch", "test_provenance_and_path_gates"),
             ("render-hash", "figure render hash mismatch", "test_provenance_and_path_gates"),

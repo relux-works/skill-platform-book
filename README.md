@@ -11,9 +11,18 @@ Provision the versions in `assets/toolchain.json`: Python **3.12.15**, Pandoc
 **3.11**, WeasyPrint **70.0**, and pypdf **5.9.0**. Install Python packages from
 `requirements-lock.txt` in an isolated environment; WeasyPrint also needs its
 [platform native dependencies](https://doc.courtbouillon.org/weasyprint/stable/first_steps.html).
-On Linux the CI workflow documents the exact setup. A platform-provided
-WeasyPrint CLI at the pinned version may be used alongside a separate Python
-environment containing pypdf. Keep both commands visible on `PATH`.
+On Linux the CI workflow documents the exact setup. Use one activated ordinary
+venv for both pypdf and WeasyPrint. The entry point selects
+`$VIRTUAL_ENV/bin/python3` explicitly, so Curator’s canonical system-command PATH
+does not discard the provisioned environment. Missing or inconsistent activation
+is refused. A separate WeasyPrint CLI is not used.
+
+On macOS, provision native Pango libraries first. If they are outside the loader’s
+default search path, set `PLATFORM_BOOK_LIBRARY_PATH` to their library directory
+(for example `$(brew --prefix)/lib`). The launcher sets `DYLD_FALLBACK_LIBRARY_PATH`
+only when executing Python; this survives macOS system-launcher filtering. Set
+`DYLD_FALLBACK_LIBRARY_PATH` to the same directory when running Python tests
+directly. Neither setting installs libraries.
 
 ```sh
 python3.12 -m venv .temp/venv
@@ -26,8 +35,9 @@ scripts/platform-book build docs/book .temp/book.pdf
 scripts/platform-book check-pdf .temp/book.pdf --fonts "PT Serif" "PT Sans"
 ```
 
-Pandoc is provisioned separately. Readiness refuses a version mismatch or changed
-bundled font. Tools are never silently installed or downloaded by the renderer.
+Pandoc is provisioned separately. Readiness checks Python packages and native
+library loading and refuses a version mismatch or changed bundled font. Tools
+are never silently installed or downloaded by the renderer.
 The nine PT fonts are vendored at an exact public source revision and byte
 hashes; their OFL licenses are included in `assets/fonts/`.
 
@@ -36,15 +46,22 @@ live under `en/` or `ru/`; only the first carries title metadata. `src/figures.j
 records every editable source, render and SHA-256 pair. A hash detects changed
 bytes; review is still needed to establish that a render represents its source.
 Builds require local, declared Markdown figures and self-contained SVGs. Raw HTML
-and symlinked figure/chapter inputs are rejected. Chapters may contain ordinary
-web links as citations. The package declares its capabilities; schema 3 does
+and symlinked figure/chapter inputs are rejected. Markdown attributes permit IDs,
+classes and numeric `width`/`height` lengths only; `style`, `srcset`, attachment
+attributes and other arbitrary HTML attributes are refused across AST node types.
+WeasyPrint’s resource fetcher serves an in-memory allow-list of the bundled CSS,
+pinned fonts and declared render bytes. HTTP, data URLs and undeclared local
+files are refused before opening; nested CSS/SVG fetches use the same boundary.
+Even a renderer-suppressed fetch denial prevents publication. Chapters may
+contain ordinary web links as citations. The package declares its capabilities; schema 3 does
 not enforce a runtime sandbox. Use trusted editorial inputs and tools.
 
 Builds publish a PDF only after figure, renderer, page and font checks pass.
 An existing output survives a failed build. Use `--expected-pages 2` for the
 sample; real books have no fixed page limit. PDF checks verify all declared font
-resources, including Form XObjects, contain font programs, and that required
-families and extractable text are present. They do not prove visual quality.
+resources, including descendant fonts and Form XObjects, resolve to nonempty
+font streams (null, empty, non-stream and unresolved references fail), and that
+required families and extractable text are present. They do not prove visual quality.
 Inspect representative pages before delivery.
 
 ## Install through Curator
@@ -56,9 +73,10 @@ relative to their frozen runtime, independently of the caller’s working direct
 
 Use **Curator v0.15.0-rc.4 or later with v2 content writers enabled**, through
 **Skillfile schema 1**. The first tagged v2-writer cutover is rc.4. The real
-installation test is validated with rc.8 and current main
-`1257799f5bf5f9bb929abd13ac70a17a68929662`. Schema 2 source freezing still carries a v1 context identity and
-rejects binary fonts with `audit.opaque.nul-byte`, even on current main. Do not
+installation test is validated with rc.8. Earlier package validation also
+exercised main `1257799f5bf5f9bb929abd13ac70a17a68929662`; the venv-preserving
+launcher needs no manager change. Schema 2 source freezing still carries a v1
+context identity and rejects binary fonts with `audit.opaque.nul-byte`, even on current main. Do not
 use that lane for this package or bypass the opaque-input check.
 
 For a committed source-checkout install test, run the command below. It clones
@@ -68,6 +86,7 @@ source drift does not affect the frozen runtime. It never uses the operator’s
 manager configuration. Commit changes before running it.
 
 ```sh
+# Keep the ordinary venv above activated; no custom Python launcher is needed.
 python3 tests/check_curator.py --curator curator
 ```
 
@@ -105,7 +124,7 @@ Windows command path is declared.
 
 | Tool / entry point | Purpose | Output |
 | --- | --- | --- |
-| `scripts/platform-book ready` | Check exact Python, Pandoc, WeasyPrint, pypdf and font hashes | Readiness verdict |
+| `scripts/platform-book ready` | Check selected Python, pinned packages, Pandoc, native loading and font hashes | Readiness verdict |
 | `scripts/platform-book new DIR --language en` | Create an original book scaffold without overwriting DIR | DIR |
 | `scripts/platform-book figures BOOK` | Parse Pandoc image AST, provenance, paths and SVG resources | Figure verdict |
 | `scripts/platform-book build BOOK OUT.pdf` | Render with the bundled template, Lua and CSS; atomically publish | OUT.pdf |
@@ -113,10 +132,12 @@ Windows command path is declared.
 | `python3 -m unittest discover -s tests -v` | Positive and negative contract tests plus narrowing controls | Test report; scratch under `.temp/` |
 | `python3 tests/check_curator.py --curator curator` | Real isolated Curator revision install/frozen-runtime check | Verdict; disposable `.temp/` fixture |
 | `curator skill check .` | Validate the package manifest and context contract | Diagnostics |
+| `pdffonts .temp/book.pdf` | Independent test-time font-embedding inspection (Poppler) | Font table |
 | `pdftoppm -png .temp/book.pdf .temp/page` | Optional manual visual inspection (Poppler) | `.temp/page-N.png` |
 
 The CI smoke build checks the original two-page sample, including all three font
 families and figure provenance, then publishes the PDF as a workflow artifact.
+Run tests in the activated venv with Poppler’s `pdffonts` available.
 Python dependencies are fully version-pinned in `requirements-lock.txt`;
 Pandoc’s Linux archive is verified against its release SHA-256 in CI.
 
