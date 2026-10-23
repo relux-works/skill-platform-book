@@ -76,7 +76,7 @@ Use **Curator v0.15.0-rc.4 or later with v2 content writers enabled**, through
 installation test is validated with rc.8. Earlier package validation also
 exercised main `1257799f5bf5f9bb929abd13ac70a17a68929662`; the venv-preserving
 launcher needs no manager change. Schema 2 source freezing still carries a v1
-context identity and rejects binary fonts with `audit.opaque.nul-byte`, even on current main. Do not
+context identity and rejects binary fonts with `audit.opaque.nul-byte`, at that tested main commit. Do not
 use that lane for this package or bypass the opaque-input check.
 
 For a committed source-checkout install test, run the command below. It clones
